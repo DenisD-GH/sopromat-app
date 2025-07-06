@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Расчёт консольной балки</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Расчёт консольной балки</h1>
+        <form action="/calculate" method="POST">
+            <div class="form-group">
+                <label for="length">Введите длину балки L (м):</label>
+                <input type="number" step="any" id="length" name="length" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="force">Введите сосредоточенную силу в начале участка F (кН):</label>
+                <input type="number" step="any" id="force" name="force" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="moment">Введите сосредоточенный момент в начале участка M (кН·м):</label>
+                <input type="number" step="any" id="moment" name="moment" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="load">Введите интенсивность равномерно распределённой нагрузки на участке q (кН/м):</label>
+                <input type="number" step="any" id="load" name="load" required>
+            </div>
+            
+            <button type="submit">Рассчитать</button>
+        </form>
+    </div>
+</body>
+</html>
