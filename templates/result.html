@@ -4,6 +4,8 @@
     <title>Результаты расчёта</title>
     <!-- Подключаем Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Подключаем наш скрипт для диаграмм -->
+    <script src="/static/js/diagram.js"></script>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -118,218 +120,15 @@
     </div>
 
     <script>
-        // Получаем данные из Go как строку JSON
+        // Получаем данные из Go
         const pointsJson = '{{.PointsJSON}}';
-        console.log("Получены данные:", pointsJson);
         
         try {
             const points = JSON.parse(pointsJson);
             
             if (points && points.length > 0) {
-                // Подготовка данных для графиков
-                const labels = points.map(p => p.x.toFixed(2));
-                const qyData = points.map(p => p.qy);
-                const mxData = points.map(p => p.mx);
-                
-                // Функция для гарантированного включения нуля в область видимости
-                function ensureZeroVisible(min, max) {
-                    // Определяем диапазон данных
-                    const range = max - min;
-                    const padding = range * 0.1; // 10% от диапазона
-                    
-                    // Если ноль не входит в текущий диапазон, расширяем его
-                    if (min > 0) {
-                        min = 0;
-                        max += padding;
-                    } else if (max < 0) {
-                        max = 0;
-                        min -= padding;
-                    } else {
-                        min -= padding;
-                        max += padding;
-                    }
-                    
-                    return { min, max };
-                }
-                
-                // Настройки для эпюры Qy
-                const qyMin = Math.min(...qyData);
-                const qyMax = Math.max(...qyData);
-                const qyRange = ensureZeroVisible(qyMin, qyMax);
-                
-                // Настройки для эпюры Mx
-                const mxMin = Math.min(...mxData);
-                const mxMax = Math.max(...mxData);
-                const mxRange = ensureZeroVisible(mxMin, mxMax);
-                
-                // Общие настройки для графиков
-                const commonChartOptions = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                font: {
-                                    size: 14
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}`;
-                                }
-                            }
-                        }
-                    }
-                };
-                
-                // Специальный плагин для рисования нулевой линии
-                const zeroLinePlugin = {
-                    id: 'zeroLine',
-                    afterDraw: (chart) => {
-                        const ctx = chart.ctx;
-                        const yAxis = chart.scales.y;
-                        const xAxis = chart.scales.x;
-                        
-                        // Находим пиксельную координату нуля
-                        const zeroY = yAxis.getPixelForValue(0);
-                        
-                        // Рисуем нулевую линию
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.lineWidth = 3; // Толстая линия
-                        ctx.strokeStyle = '#000000'; // Черный цвет
-                        ctx.moveTo(xAxis.left, zeroY);
-                        ctx.lineTo(xAxis.right, zeroY);
-                        ctx.stroke();
-                        ctx.restore();
-                    }
-                };
-                
-                // Строим эпюру поперечных сил (Qy)
-                new Chart(
-                    document.getElementById('qyChart'),
-                    {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Qy, кН',
-                                data: qyData,
-                                borderColor: 'red',
-                                backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                                borderWidth: 2,
-                                fill: {
-                                    target: 'origin',
-                                    above: 'rgba(255, 0, 0, 0.2)',
-                                    below: 'rgba(255, 0, 0, 0.2)'
-                                },
-                                tension: 0, // Без сглаживания
-                                pointRadius: 0
-                            }]
-                        },
-                        options: {
-                            ...commonChartOptions,
-                            scales: {
-                                x: {
-                                    display: true,
-                                    title: {
-                                        display: true,
-                                        text: 'Длина балки, м',
-                                        font: {
-                                            size: 14,
-                                            weight: 'bold'
-                                        }
-                                    },
-                                    grid: {
-                                        color: 'rgba(0, 0, 0, 0.1)'
-                                    }
-                                },
-                                y: {
-                                    display: true,
-                                    title: {
-                                        display: true,
-                                        text: 'Qy, кН',
-                                        font: {
-                                            size: 14,
-                                            weight: 'bold'
-                                        }
-                                    },
-                                    grid: {
-                                        color: 'rgba(0, 0, 0, 0.1)'
-                                    },
-                                    min: qyRange.min,
-                                    max: qyRange.max
-                                }
-                            }
-                        },
-                        plugins: [zeroLinePlugin]
-                    }
-                );
-                
-                // Строим эпюру изгибающих моментов (Mx)
-                new Chart(
-                    document.getElementById('mxChart'),
-                    {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Mx, кН·м',
-                                data: mxData,
-                                borderColor: 'blue',
-                                backgroundColor: 'rgba(0, 0, 255, 0.2)',
-                                borderWidth: 2,
-                                fill: {
-                                    target: 'origin',
-                                    above: 'rgba(0, 0, 255, 0.2)',
-                                    below: 'rgba(0, 0, 255, 0.2)'
-                                },
-                                tension: 0, // Без сглаживания
-                                pointRadius: 0
-                            }]
-                        },
-                        options: {
-                            ...commonChartOptions,
-                            scales: {
-                                x: {
-                                    display: true,
-                                    title: {
-                                        display: true,
-                                        text: 'Длина балки, м',
-                                        font: {
-                                            size: 14,
-                                            weight: 'bold'
-                                        }
-                                    },
-                                    grid: {
-                                        color: 'rgba(0, 0, 0, 0.1)'
-                                    }
-                                },
-                                y: {
-                                    display: true,
-                                    title: {
-                                        display: true,
-                                        text: 'Mx, кН·м',
-                                        font: {
-                                            size: 14,
-                                            weight: 'bold'
-                                        }
-                                    },
-                                    grid: {
-                                        color: 'rgba(0, 0, 0, 0.1)'
-                                    },
-                                    min: mxRange.min,
-                                    max: mxRange.max
-                                }
-                            }
-                        },
-                        plugins: [zeroLinePlugin]
-                    }
-                );
-                
+                // Вызываем функцию построения диаграмм
+                drawDiagrams(points);
             } else {
                 document.querySelector('.charts-container').innerHTML = 
                     '<p class="error-message">Ошибка построения графиков: данные отсутствуют</p>';
