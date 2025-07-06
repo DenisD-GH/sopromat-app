@@ -40,12 +40,66 @@ function drawZeroLine(chart) {
     ctx.restore();
 }
 
+// Функция для рисования балки с заделкой СПРАВА
+function drawBeam(chart, beamLength) {
+    const ctx = chart.ctx;
+    const xAxis = chart.scales.x;
+    const yAxis = chart.scales.y;
+    
+    // Центр по вертикали
+    const centerY = (yAxis.top + yAxis.bottom) / 2;
+    
+    // Координаты начала и конца балки
+    const startX = xAxis.getPixelForValue(0);
+    const endX = xAxis.getPixelForValue(beamLength);
+    
+    // Рисуем балку
+    ctx.save();
+    ctx.beginPath();
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#2c3e50';
+    ctx.moveTo(startX, centerY);
+    ctx.lineTo(endX, centerY);
+    ctx.stroke();
+    ctx.restore();
+    
+    // Рисуем опору (заделку) СПРАВА
+    const supportWidth = 20;
+    ctx.save();
+    ctx.strokeStyle = '#7f8c8d';
+    ctx.lineWidth = 3;
+    
+    // Вертикальные линии заделки (справа)
+    for (let i = 0; i < 5; i++) {
+        const xPos = endX + supportWidth - i * 5;
+        ctx.beginPath();
+        ctx.moveTo(xPos, centerY - 30);
+        ctx.lineTo(xPos, centerY + 30);
+        ctx.stroke();
+    }
+    
+    // Горизонтальная линия заделки
+    ctx.beginPath();
+    ctx.moveTo(endX, centerY - 30);
+    ctx.lineTo(endX + supportWidth, centerY - 30);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(endX, centerY + 30);
+    ctx.lineTo(endX + supportWidth, centerY + 30);
+    ctx.stroke();
+    ctx.restore();
+}
+
 // Основная функция для построения диаграмм
 function drawDiagrams(points) {
     if (!points || points.length === 0) {
         console.error("Ошибка: данные для графиков отсутствуют");
         return;
     }
+
+    // Длина балки из данных
+    const beamLength = points.length > 0 ? points[points.length - 1].x : 0;
 
     // Подготовка данных
     const labels = points.map(p => p.x.toFixed(2));
@@ -83,6 +137,55 @@ function drawDiagrams(points) {
         id: 'zeroLine',
         afterDraw: drawZeroLine
     };
+    
+    // Плагин для рисования балки
+    const beamPlugin = {
+        id: 'beam',
+        afterDraw: (chart) => {
+            drawBeam(chart, beamLength);
+        }
+    };
+
+    // Создаем схему балки
+    new Chart(
+        document.getElementById('beamDiagram'),
+        {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: new Array(points.length).fill(0),
+                    pointRadius: 0,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    x: {
+                        min: 0,
+                        max: beamLength,
+                        title: {
+                            display: true,
+                            text: 'Расчётная схема балки',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        grid: { display: false }
+                    },
+                    y: {
+                        display: false,
+                        min: -1,
+                        max: 1
+                    }
+                },
+                plugins: {
+                    tooltip: { enabled: false },
+                    legend: { display: false }
+                }
+            },
+            plugins: [beamPlugin]
+        }
+    );
     
     // Создаем эпюру Qy
     new Chart(

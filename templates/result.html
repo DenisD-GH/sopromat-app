@@ -2,9 +2,7 @@
 <html>
 <head>
     <title>Результаты расчёта</title>
-    <!-- Подключаем Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Подключаем наш скрипт для диаграмм -->
     <script src="/static/js/diagram.js"></script>
     <style>
         body { 
@@ -53,7 +51,7 @@
             background-color: white;
         }
         .chart-container {
-            height: 400px;
+            height: 300px;
             position: relative;
         }
         .chart-title {
@@ -67,6 +65,12 @@
             text-align: center;
             padding: 20px;
             font-weight: bold;
+        }
+        .beam-diagram {
+            height: 150px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -102,6 +106,12 @@
         </table>
         
         <div class="charts-container">
+            <div>
+                <div class="chart-title">Расчётная схема балки</div>
+                <div class="beam-diagram">
+                    <canvas id="beamDiagram"></canvas>
+                </div>
+            </div>
             <div>
                 <div class="chart-title">Эпюра поперечных сил (Q<sub>y</sub>)</div>
                 <div class="chart-container">
