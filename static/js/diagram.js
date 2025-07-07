@@ -102,6 +102,189 @@ function drawBeam(chart, beamLength) {
     ctx.restore();
 }
 
+// ===== НОВЫЕ ФУНКЦИИ ДЛЯ ОТДЕЛЬНЫХ ЭПЮР =====
+
+// Функция для создания схемы балки
+function createBeamDiagram(labels, beamLength) {
+    return new Chart(
+        document.getElementById('beamDiagram'),
+        {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: new Array(labels.length).fill(0),
+                    pointRadius: 0,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        min: 0,
+                        max: beamLength,
+                        title: {
+                            display: true,
+                            text: 'Расчётная схема балки',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        grid: { display: false }
+                    },
+                    y: {
+                        display: false,
+                        min: -1,
+                        max: 1
+                    }
+                },
+                plugins: {
+                    tooltip: { enabled: false },
+                    legend: { display: false }
+                }
+            },
+            plugins: [{
+                id: 'beam',
+                afterDraw: (chart) => {
+                    drawBeam(chart, beamLength);
+                }
+            }]
+        }
+    );
+}
+
+// Функция для создания эпюры Qy
+function createQyDiagram(labels, qyData, qyRange) {
+    return new Chart(
+        document.getElementById('qyChart'),
+        {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Qy, кН',
+                    data: qyData,
+                    borderColor: 'red',
+                    backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                    borderWidth: 2,
+                    fill: {
+                        target: 'origin',
+                        above: 'rgba(255, 0, 0, 0.2)',
+                        below: 'rgba(255, 0, 0, 0.2)'
+                    },
+                    tension: 0,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { font: { size: 14 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Длина балки, м',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Qy, кН',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                        min: qyRange.min,
+                        max: qyRange.max
+                    }
+                }
+            },
+            plugins: [{
+                id: 'zeroLine',
+                afterDraw: drawZeroLine
+            }]
+        }
+    );
+}
+
+// Функция для создания эпюры Mx
+function createMxDiagram(labels, mxData, mxRange) {
+    return new Chart(
+        document.getElementById('mxChart'),
+        {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Mx, кН·м',
+                    data: mxData,
+                    borderColor: 'blue',
+                    backgroundColor: 'rgba(0, 0, 255, 0.2)',
+                    borderWidth: 2,
+                    fill: {
+                        target: 'origin',
+                        above: 'rgba(0, 0, 255, 0.2)',
+                        below: 'rgba(0, 0, 255, 0.2)'
+                    },
+                    tension: 0,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { font: { size: 14 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Длина балки, м',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Mx, кН·м',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                        min: mxRange.min,
+                        max: mxRange.max
+                    }
+                }
+            },
+            plugins: [{
+                id: 'zeroLine',
+                afterDraw: drawZeroLine
+            }]
+        }
+    );
+}
+
 // Основная функция для построения эпюр
 function drawDiagrams(points) {
     if (!points || points.length === 0) {
@@ -129,176 +312,12 @@ function drawDiagrams(points) {
     const mxMax = Math.max(...mxData);
     const mxRange = ensureZeroVisible(mxMin, mxMax);
     
-    // Общие настройки
-    // Адаптивность
-    // Положение легенды
-    // Формат подсказок
-    const commonOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'top',
-                labels: { font: { size: 14 } }
-            },
-            tooltip: {
-                callbacks: {
-                    label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`
-                }
-            }
-        }
-    };
-    
-    // Плагин для нулевой линии
-    const zeroLinePlugin = {
-        id: 'zeroLine',
-        afterDraw: drawZeroLine
-    };
-    
-    // Плагин для рисования балки
-    const beamPlugin = {
-        id: 'beam',
-        afterDraw: (chart) => {
-            drawBeam(chart, beamLength);
-        }
-    };
-
     // Создаем схему балки
-    new Chart(
-        document.getElementById('beamDiagram'),
-        {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: new Array(points.length).fill(0),
-                    pointRadius: 0,
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                ...commonOptions,
-                scales: {
-                    x: {
-                        min: 0,
-                        max: beamLength,
-                        title: {
-                            display: true,
-                            text: 'Расчётная схема балки',
-                            font: { size: 16, weight: 'bold' }
-                        },
-                        grid: { display: false }
-                    },
-                    y: {
-                        display: false,
-                        min: -1,
-                        max: 1
-                    }
-                },
-                plugins: {
-                    tooltip: { enabled: false },
-                    legend: { display: false }
-                }
-            },
-            plugins: [beamPlugin]
-        }
-    );
+    createBeamDiagram(labels, beamLength);
     
     // Создаем эпюру Qy
-    new Chart(
-        document.getElementById('qyChart'),
-        {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Qy, кН',
-                    data: qyData,
-                    borderColor: 'red',
-                    backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                    borderWidth: 2,
-                    fill: {
-                        target: 'origin',
-                        above: 'rgba(255, 0, 0, 0.2)',
-                        below: 'rgba(255, 0, 0, 0.2)'
-                    },
-                    tension: 0,
-                    pointRadius: 0
-                }]
-            },
-            options: {
-                ...commonOptions,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Длина балки, м',
-                            font: { size: 14, weight: 'bold' }
-                        },
-                        grid: { color: 'rgba(0, 0, 0, 0.1)' }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Qy, кН',
-                            font: { size: 14, weight: 'bold' }
-                        },
-                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
-                        min: qyRange.min,
-                        max: qyRange.max
-                    }
-                }
-            },
-            plugins: [zeroLinePlugin]
-        }
-    );
+    createQyDiagram(labels, qyData, qyRange);
     
     // Создаем эпюру Mx
-    new Chart(
-        document.getElementById('mxChart'),
-        {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Mx, кН·м',
-                    data: mxData,
-                    borderColor: 'blue',
-                    backgroundColor: 'rgba(0, 0, 255, 0.2)',
-                    borderWidth: 2,
-                    fill: {
-                        target: 'origin',
-                        above: 'rgba(0, 0, 255, 0.2)',
-                        below: 'rgba(0, 0, 255, 0.2)'
-                    },
-                    tension: 0,
-                    pointRadius: 0
-                }]
-            },
-            options: {
-                ...commonOptions,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Длина балки, м',
-                            font: { size: 14, weight: 'bold' }
-                        },
-                        grid: { color: 'rgba(0, 0, 0, 0.1)' }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Mx, кН·м',
-                            font: { size: 14, weight: 'bold' }
-                        },
-                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
-                        min: mxRange.min,
-                        max: mxRange.max
-                    }
-                }
-            },
-            plugins: [zeroLinePlugin]
-        }
-    );
+    createMxDiagram(labels, mxData, mxRange);
 }
