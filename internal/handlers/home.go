@@ -12,14 +12,16 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Загрузка HTML-шаблона
+	// Загрузка HTML-шаблона из файла templates/index.html
 	tmpl, err := template.ParseFiles("templates/index.html")
+	// Проверка что запрошен именно корневой путь ("/")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Рендеринг шаблона
+	// Рендеринг шаблона в HTTP-ответ
+	// Второй аргумент nil - не передаем данных в шаблон
 	err = tmpl.Execute(w, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

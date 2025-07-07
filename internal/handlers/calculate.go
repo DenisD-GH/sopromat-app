@@ -1,3 +1,5 @@
+// обработчик расчетов
+
 package handlers
 
 import (
@@ -9,8 +11,11 @@ import (
 	"strconv"
 )
 
+// Объявление обработчика для пути "/calculate"
 func Calculate(w http.ResponseWriter, r *http.Request) {
+	// Проверка метода запроса (должен быть POST)
 	if r.Method != http.MethodPost {
+		// Если метод не POST - перенаправляем на главную страницу
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -22,13 +27,14 @@ func Calculate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Преобразование строк в числа
+	// Получение значений из формы и преобразование в float64
+	// Игнорируются ошибки преобразования. Нужно добавлять проверку ошибок!
 	length, _ := strconv.ParseFloat(r.FormValue("length"), 64)
 	force, _ := strconv.ParseFloat(r.FormValue("force"), 64)
 	moment, _ := strconv.ParseFloat(r.FormValue("moment"), 64)
 	load, _ := strconv.ParseFloat(r.FormValue("load"), 64)
 
-	// Создание входной структуры
+	// Создание входной структуры с данными из формы
 	input := models.Input{
 		Length: length,
 		Force:  force,
@@ -36,20 +42,21 @@ func Calculate(w http.ResponseWriter, r *http.Request) {
 		Load:   load,
 	}
 
-	// Выполнение расчётов
+	// Выполнение расчётов с использованием функции расчета из пакета calculations
 	result := calculations.CalculateBeam(input)
 
-	// Преобразуем точки в JSON
+	// Преобразование точек для графиков в JSON
 	pointsJSON, err := json.Marshal(result.Points)
 	if err != nil {
 		http.Error(w, "Ошибка генерации данных графиков", http.StatusInternalServerError)
 		return
 	}
 
-	// Создаем структуру для шаблона
+	// Создание структуры данных для шаблона
+	// template.JS - специальный тип для безопасной вставки JavaScriptS (заменить?)
 	templateData := struct {
 		Result     models.Result
-		PointsJSON template.JS // Используем специальный тип для JS
+		PointsJSON template.JS // Специальный тип для JS
 	}{
 		Result:     result,
 		PointsJSON: template.JS(pointsJSON), // Безопасная передача JS

@@ -1,13 +1,18 @@
 // Функция для гарантированного включения нуля в область видимости
 function ensureZeroVisible(min, max) {
+    // Проверка на невалидные входные данные
     if (min === undefined || max === undefined) return {};
     
+    // Вычисление диапазона значений и добавление 10% отступа
     const range = max - min;
     const padding = range * 0.1;
     
     let newMin = min;
     let newMax = max;
     
+    // Если все значения положительные - расширяем вниз до нуля
+    // Если все отрицательные - расширяем вверх до нуля
+    // Если значения разнознаковые - расширяем в обе стороны. Исправить
     if (min > 0) {
         newMin = 0;
         newMax = max + padding;
@@ -22,14 +27,17 @@ function ensureZeroVisible(min, max) {
     return { min: newMin, max: newMax };
 }
 
-// Функция для рисования нулевой линии
+// Функция для рисования жирной нулевой линии
 function drawZeroLine(chart) {
+    // Получение контекста рисования и осей
     const ctx = chart.ctx;
     const yAxis = chart.scales.y;
     const xAxis = chart.scales.x;
-    
+
+    // Определение позиции нуля по Y
     const zeroY = yAxis.getPixelForValue(0);
     
+    // Настройка стилей и рисование горизонтальной линии через весь график
     ctx.save();
     ctx.beginPath();
     ctx.lineWidth = 3;
@@ -42,6 +50,7 @@ function drawZeroLine(chart) {
 
 // Функция для рисования балки с заделкой СПРАВА
 function drawBeam(chart, beamLength) {
+    // Получение параметров графика и вычисление центра
     const ctx = chart.ctx;
     const xAxis = chart.scales.x;
     const yAxis = chart.scales.y;
@@ -70,6 +79,8 @@ function drawBeam(chart, beamLength) {
     ctx.lineWidth = 3;
     
     // Вертикальные линии заделки (справа)
+    // 5 вертикальных линий справа от конца балки (потом исправить)
+    // 2 горизонтальные линии сверху и снизу (потом исправить)
     for (let i = 0; i < 5; i++) {
         const xPos = endX + supportWidth - i * 5;
         ctx.beginPath();
@@ -91,22 +102,25 @@ function drawBeam(chart, beamLength) {
     ctx.restore();
 }
 
-// Основная функция для построения диаграмм
+// Основная функция для построения эпюр
 function drawDiagrams(points) {
     if (!points || points.length === 0) {
-        console.error("Ошибка: данные для графиков отсутствуют");
+        console.error("Ошибка: данные для графиков (эпюр) отсутствуют");
         return;
     }
 
-    // Длина балки из данных
+    // Определение длины балки по последней точке
     const beamLength = points.length > 0 ? points[points.length - 1].x : 0;
 
     // Подготовка данных
+    // Метки по оси X (длина балки)
+    // Данные для поперечных сил (Qy)
+    // Данные для изгибающих моментов (Mx)
     const labels = points.map(p => p.x.toFixed(2));
     const qyData = points.map(p => p.qy);
     const mxData = points.map(p => p.mx);
     
-    // Определение диапазонов
+    // Расчет диапазонов значений с обязательным включением нуля
     const qyMin = Math.min(...qyData);
     const qyMax = Math.max(...qyData);
     const qyRange = ensureZeroVisible(qyMin, qyMax);
@@ -116,6 +130,9 @@ function drawDiagrams(points) {
     const mxRange = ensureZeroVisible(mxMin, mxMax);
     
     // Общие настройки
+    // Адаптивность
+    // Положение легенды
+    // Формат подсказок
     const commonOptions = {
         responsive: true,
         maintainAspectRatio: false,

@@ -2,7 +2,7 @@ package models
 
 // Данные точки эпюры
 type PlotPoint struct {
-	X  float64 `json:"x"`  // Координата по длине балки
+	X  float64 `json:"x"`  // Координата по длине балки. Переименовать на z
 	Qy float64 `json:"qy"` // Значение поперечной силы
 	Mx float64 `json:"mx"` // Значение изгибающего момента
 }
